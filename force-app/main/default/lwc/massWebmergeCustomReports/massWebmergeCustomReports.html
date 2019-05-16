@@ -1,3 +1,31 @@
 <template>
-    
+    <lightning-card title="Webmerge Custom Reports" icon-name="custom:custom63">
+        <div class="slds-m-around_medium">
+            <p>{statusMessage}</p>
+            <template if:true={soqls}>
+                <lightning-combobox
+                    style="width:25%"
+                    name="Query Options"
+                    label="Available Queries:"
+                    value=""
+                    placeholder="Select a Query Option"
+                    options={soqlOptions}
+                    onchange={setSoqlOption}
+                ></lightning-combobox>
+                <button onclick={queryGenericCall}>Get Records</button>
+                <button onclick={mergeRecords}>Merge</button>
+                <template if:true={relatedParties}>
+                    <table class="PartyTable" style="width:100%">
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                        </tr>
+                        <template for:each={relatedParties} for:item="rp">
+                            <tr key={rp.Id}> <td>{rp.Id}</td> <td>{rp.Name}</td></tr>
+                        </template>
+                    </table>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
 </template>
