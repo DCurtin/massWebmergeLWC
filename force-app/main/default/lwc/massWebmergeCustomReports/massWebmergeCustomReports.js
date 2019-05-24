@@ -21,11 +21,34 @@ export default class MassWebmergeCustomReports extends LightningElement
         this.getSoqlQueries();
     }
 
+    toggleCheckBoxes(event)
+    {
+        //console.log(event.target.checked);
+        if(event.target.checked)
+        {
+            this.checkAll();
+        }else
+        {
+            this.uncheckAll();
+        }
+    }
+
+    uncheckAll()
+    {
+        //uncheck all boxex
+        console.log('uncheck all');
+    }
+    checkAll()
+    {
+        //check all boxex
+        console.log('check all');
+    }
+
     queryGenericCall()
     {
         if(this.soqlOption == null)
             {
-                console.log("Fail Wale");
+                this.failWhale();
                 return;
             }
         this.queryValueCall(this.soqlOption);
@@ -71,5 +94,21 @@ export default class MassWebmergeCustomReports extends LightningElement
     setSoqlOption(event)
     {
         this.soqlOption = event.detail.value;
+    }
+
+    failWhale()
+    {
+        var failWhaleString = ` FAIL WHALE!
+
+        W     W      W        
+        W        W  W     W    
+                      '.  W      
+          .-""-._     \\ \\.--|  
+         /       "-..__) .-'   
+        |     _         /      
+        '-.__,   .__.,'       
+         \`'----'._--'      
+        VVVVVVVVVVVVVVVVVVVVV`;
+        console.log(failWhaleString);
     }
 }

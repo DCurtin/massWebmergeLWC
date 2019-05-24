@@ -1,30 +1,34 @@
 <template>
     <lightning-card title="Webmerge Custom Reports" icon-name="custom:custom63">
-        <div class="slds-m-around_medium">
+        <div class="slds-m-around_large slds-grid slds-grid_vertical">
             <p>{statusMessage}</p>
-            <template if:true={soqls}>
-                <lightning-combobox
-                    style="width:25%"
-                    name="Query Options"
-                    label="Available Queries:"
-                    value=""
-                    placeholder="Select a Query Option"
-                    options={soqlOptions}
-                    onchange={setSoqlOption}
-                ></lightning-combobox>
-                <button onclick={queryGenericCall}>Get Records</button>
-                <button onclick={mergeRecords}>Merge</button>
-                <template if:true={relatedParties}>
-                    <table class="PartyTable" style="width:100%">
-                        <tr>
-                            <th>Id</th>
-                            <th>Name</th>
-                        </tr>
-                        <template for:each={relatedParties} for:item="rp">
-                            <tr key={rp.Id}> <td>{rp.Id}</td> <td>{rp.Name}</td></tr>
-                        </template>
-                    </table>
-                </template>
+            <lightning-combobox
+                name="Query Options"
+                value=""
+                label="Choose a Query:"
+                placeholder="Select a Query Option"
+                options={soqlOptions}
+                onchange={setSoqlOption}
+                class="slds-m-top_medium"
+                >
+            </lightning-combobox>
+
+            <ul class="slds-button-group-row">
+                <li class="slds-button-group-item"><button onclick={queryGenericCall} >Run Soql Query</button></li>
+                <li class="slds-button-group-item"><button if:true={relatedParties} onclick={mergeRecords} >Merge</button></li>
+            </ul>
+
+            <template if:true={relatedParties}>
+                <table class="PartyTable slds-m-top_medium" style="width:100%">
+                    <tr>
+                        <th><lightning-input class="slds-m-around_xxx-small" type="checkbox" onchange={toggleCheckBoxes}></lightning-input></th>
+                        <th>Id</th>
+                        <th>Name</th>
+                    </tr>
+                    <template for:each={relatedParties} for:item="rp">
+                        <tr key={rp.Id}> <td><lightning-input class="slds-m-around_xxx-small" type="checkbox" ></lightning-input></td> <td>{rp.Id}</td> <td>{rp.Name}</td></tr>
+                    </template>
+                </table>
             </template>
         </div>
     </lightning-card>
