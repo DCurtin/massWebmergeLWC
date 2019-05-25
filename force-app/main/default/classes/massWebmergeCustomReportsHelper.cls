@@ -1,37 +1,59 @@
 public with sharing class massWebmergeCustomReportsHelper {
     @AuraEnabled
-    public static list<Related_Party__c> queryValue(soqlQueryWrapper soqlQuery){
-        System.debug(soqlQuery);
-        List<Related_Party__c> accountQuery = database.query(soqlQuery.query);
-        List<Related_Party__c> filteredList = new List<Related_Party__c>();
+    public static list<sobject> retrieveRecordsUsingWrapper(soqlQueryWrapper wrappedSoqlQuery){
         
-        if(String.isEmpty(soqlQuery.filterFieldPath) || String.isEmpty(soqlQuery.filterValue))
-            return accountQuery;
-        for(Related_Party__c accountQ : accountQuery)
-        {         
-            boolean addObjectToList = filterSobject(accountQ, soqlQuery.filterFieldPath, soqlQuery.filterValue);
-            if(addObjectToList)
-                filteredList.add((Related_Party__c) accountQ);
+        if(isFilteringRequired(wrappedSoqlQuery))
+        {
+            return getFilteredObjects(wrappedSoqlQuery);
+        }else 
+        {
+            return getRecordsFromSoqlQuery(wrappedSoqlQuery);
         }
+            
+    }
+
+    private static boolean isFilteringRequired(soqlQueryWrapper wrappedSoqlQuery)
+    {
+        if(String.isEmpty(wrappedSoqlQuery.filterFieldPath) || String.isEmpty(wrappedSoqlQuery.filterValue))
+            return false;
+        return true;
+    }
+
+    private static List<sobject> getFilteredObjects(soqlQueryWrapper wrappedSoqlQuery)
+    {
+        List<sobject> accountQuery = getRecordsFromSoqlQuery(wrappedSoqlQuery);
+        List<sobject> filteredList = new List<sobject>();
+
+        for(sobject accountQ : accountQuery)
+        {         
+            boolean addObjectToList = filterSobject(accountQ, wrappedSoqlQuery.filterFieldPath, wrappedSoqlQuery.filterValue);
+            if(addObjectToList)
+                filteredList.add((sobject) accountQ);
+        }
+        
         return filteredList;
     }
 
+    private static List<sobject> getRecordsFromSoqlQuery(soqlQueryWrapper wrappedSoqlQuery)
+    {
+        return database.query(wrappedSoqlQuery.query);
+    }
+
+
     @AuraEnabled
-    public static soqlQueriesWrapper getQueriesFromStaticResource(){
+    public static map<string,soqlQueryWrapper> getQueriesFromStaticResource(){
         StaticResource soqlQueriesStaticResource = [select id,body from StaticResource Where name = 'soqlQueries' LIMIT 1];
-        soqlQueriesWrapper soqlQueries = (soqlQueriesWrapper)JSON.deserialize(soqlQueriesStaticResource.body.toString(), soqlQueriesWrapper.class);
+        map<string,soqlQueryWrapper> soqlQueries = (map<string,soqlQueryWrapper>)JSON.deserialize(soqlQueriesStaticResource.body.toString(), map<string,soqlQueryWrapper>.class);
         return soqlQueries;    
     }
 
     @AuraEnabled(cacheable=false)
     public static void doWebmerge(list<Id> recordIds, string mappingName){
-        System.debug(mappingName);
-        System.debug(recordIds);
         webm__webmerge_mapping__c mapping = [SELECT id, webm__Salesforce_Object_Name__c from webm__webmerge_mapping__c where name=:mappingName LIMIT 1];
         
         if(mapping == null)
             return;
-        System.debug(mapping.id);
+
         boolean run = webm.WebmergeGenerator.generateDocumentBatchCombined(
             mapping.id, 
             recordIds, 

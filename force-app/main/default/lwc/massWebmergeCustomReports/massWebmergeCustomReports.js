@@ -1,88 +1,68 @@
 import { LightningElement, track } from 'lwc';
-import queryValue from '@salesforce/apex/massWebmergeCustomReportsHelper.queryValue';
+import retrieveRecordsUsingWrapper from '@salesforce/apex/massWebmergeCustomReportsHelper.retrieveRecordsUsingWrapper';
 import getQueriesFromStaticResource from '@salesforce/apex/massWebmergeCustomReportsHelper.getQueriesFromStaticResource';
 import doWebmerge from '@salesforce/apex/massWebmergeCustomReportsHelper.doWebmerge';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 
 export default class MassWebmergeCustomReports extends LightningElement 
 {
     @track statusMessage;
-    @track relatedParties;
+    @track queriedRecords;
     @track soqlOptionNamesList;
     @track tableLoadingState = true;
+    @track finishedMerging = false;
+    @track selectedSoqlOptionName = null;
 
-    availableSoqlQueries=null;//a list of possible soql queries
-
-    @track tableColumnLabels = [
+    tableColumnLabels = [
         { label: 'Name', fieldName: 'Name' }
     ];
-
-    selectedSoqlOptionName = null;
-    selectedRows = [];
     
+    statusMessages = {
+        welcomeMessage: 'Welcome, Please choose a query.',
+        finish:         'Webmerge has been submit. Please wait 5 to 10 minutes to received the email. Feel free to navigate away from this page.'
+    }
+    availableSoqlQueries=null;//a list of possible soql queries
+    
+    selectedRecords = [];
+    selectedMapping = null;
     /*
         provide available 
     */
-    get soqlOptionNames(){
-        return this.soqlOptionNamesList;
-    }
+
     constructor()
     {
         super();
-        this.statusMessage = "Welcome, please choose a query.";
-        this.getSoqlQueryOptions();
+        this.setStatusMessage(this.statusMessages.welcomeMessage);
+        this.callGetQueriesFromStaticResourceApex();
     }
 
-    getSelectedRecords(event)
-    {
-        this.selectedRows = event.detail.selectedRows;
-    }
-
-    queryGenericCall()
-    {
-        if(this.selectedSoqlOptionName == null)
-            {
-                this.failWhale();
-                return;
-            }
-        this.queryValueCall(this.selectedSoqlOptionName);
-    }
-
-    mergeRecords()
-    {
-        var recordIds = [];
-        console.log(this.availableSoqlQueries[this.selectedSoqlOptionName].webmergeMappingName);
-        this.selectedRows.forEach(record => {recordIds.push(record.Id)});
-        console.log(recordIds);
-        doWebmerge({recordIds: recordIds, mappingName: this.availableSoqlQueries[this.selectedSoqlOptionName].webmergeMappingName})
-    }
-
-    queryValueCall(selectedSoqlOptionName)
-    {
-        console.log(this.availableSoqlQueries[selectedSoqlOptionName]);
-        queryValue({soqlQuery: this.availableSoqlQueries[selectedSoqlOptionName]}).then(function(result)
-        {
-            console.log(result[0].Account__r.Id);
-            this.relatedParties=result;
-            this.tableLoadingState=false;
-        }.bind(this))
-    }
-
-    getSoqlQueryOptions()
+    
+    //soql query combobox 
+    callGetQueriesFromStaticResourceApex()
     {
         getQueriesFromStaticResource().then(function(result)
         {
-            this.availableSoqlQueries=result.queries;
-            this.soqlOptionNamesList = this.getSoqlOptionNames(result.queries);
+            console.log(result);
+            this.setAvailableSoqlQueries(result);
+            this.setsoqlOptionNamesList(result);
         }.bind(this));
     }
 
-    getSoqlOptionNames(availableQueries)
+    setAvailableSoqlQueries(queries)
     {
-        console.log("getting options");
+        this.availableSoqlQueries=queries;
+    }
+    setsoqlOptionNamesList(queries)
+    {
+        this.soqlOptionNamesList = this.getSoqlOptionNamesIfQueriesNotNull(queries);
+    }
+
+    getSoqlOptionNamesIfQueriesNotNull(availableQueries)
+    {
         var soqlQueryNames = [];
 
-        if(availableQueries == null)
+        if(availableQueries == null || availableQueries.length === 0)
         {
             return soqlQueryNames;
         }
@@ -90,16 +70,116 @@ export default class MassWebmergeCustomReports extends LightningElement
         Object.keys(availableQueries).forEach(query => {
             soqlQueryNames.push({label: query, value: query})
         });
-        console.log(soqlQueryNames);
+
         return soqlQueryNames;
     }
 
-    setselectedSoqlOptionName(event)
+    setSelectedSoqlOptionName(event)
     {
         this.selectedSoqlOptionName = event.detail.value;
-        //this.tableColumnLabels = this.getTableColumnLabels(this.selectedSoqlOptionName);
     }
 
+    //Run Soql Query Button
+    runSoqlQuery()
+    {
+        this.setSelectedMapping();
+        this.callRetrieveRecordsUsingWrapperApex();
+    }
+
+    setSelectedMapping()
+    {
+        this.selectedMapping = this.availableSoqlQueries[this.selectedSoqlOptionName].webmergeMappingName;
+    }
+
+    callRetrieveRecordsUsingWrapperApex()
+    {
+        var selectedSoqlOptionName = this.selectedSoqlOptionName;
+
+        this.settableLoadingState(true);
+        retrieveRecordsUsingWrapper({wrappedSoqlQuery: this.availableSoqlQueries[selectedSoqlOptionName]}).then(function(result)
+        {
+            this.settableLoadingState(false);
+            this.setQueriedRecords(result);
+            if(result.length === 0)
+                this.notifyUserQueryReturnedNoRecords();
+        }.bind(this))
+    }
+    settableLoadingState(state)
+    {
+        this.tableLoadingState=state;
+    }
+   
+    setQueriedRecords(result)
+    {
+        this.queriedRecords=result;
+    }
+
+    notifyUserQueryReturnedNoRecords()
+    {
+        const showInfo = new ShowToastEvent({
+            title: 'Selected Query Returned No Records',
+            message: 'It\'s possible there are no records that meet the queries filter options or the query was written incorrectly.',
+            variant: 'info',
+        });
+        this.dispatchEvent(showInfo);
+    }
+
+    //Merge Records Button
+    executeWebmergeFinishMerging()
+    {
+        this.callDoWebmergeApexIfRecordsSelected();
+        this.finishMerging();
+    }
+
+    callDoWebmergeApexIfRecordsSelected()
+    {
+        var recordIds = this.getRecordIdsFromSelectedRecords();
+        if(recordIds.length === 0)
+        {
+            //toast note
+            //
+            this.notifyUserNoRecordsSelected();
+            return;
+        }
+
+        doWebmerge({recordIds: recordIds, mappingName: this.availableSoqlQueries[this.selectedSoqlOptionName].webmergeMappingName})
+
+    }
+
+    notifyUserNoRecordsSelected()
+    {
+        const showWarning = new ShowToastEvent({
+            title: 'No Records Selected',
+            message: 'Please selected 1 or more records by clicking on the check boxes beside them.',
+            variant: 'warning',
+        });
+        this.dispatchEvent(showWarning);
+    }
+
+    getRecordIdsFromSelectedRecords()
+    {
+        var recordIds = [];
+        this.selectedRecords.forEach(record => {recordIds.push(record.Id)});
+        return recordIds;
+    }
+
+    finishMerging()
+    {
+        this.setStatusMessage(this.statusMessages.finish);
+        this.finishedMerging=true;
+    }
+
+     //queried records table
+     setSelectedRecords(event)
+     {
+         this.selectedRecords = event.detail.selectedRows;
+     }
+
+    //helper
+    setStatusMessage(message)
+    {
+        this.statusMessage = message;
+    }
     failWhale()
     {
         var failWhaleString = ` 

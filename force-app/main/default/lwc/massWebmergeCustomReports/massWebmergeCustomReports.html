@@ -2,33 +2,35 @@
     <lightning-card title="Webmerge Custom Reports" icon-name="custom:custom63">
         <div class="slds-m-around_large slds-grid slds-grid_vertical">
             <p>{statusMessage}</p>
-            <lightning-combobox
-                name="Query Options"
-                value=""
-                label="Choose a Query:"
-                placeholder="Select a Query Option"
-                options={soqlOptionNames}
-                onchange={setselectedSoqlOptionName}
-                class="slds-m-top_medium"
-                >
-            </lightning-combobox>
+            <div if:false={finishedMerging}>
+                <lightning-combobox
+                    name="Query Options"
+                    value=""
+                    label="Choose a Query:"
+                    placeholder="Select a Query Option"
+                    options={soqlOptionNamesList}
+                    onchange={setSelectedSoqlOptionName}
+                    class="slds-m-top_medium"
+                    >
+                </lightning-combobox>
 
-            <ul class="slds-button-group-row">
-                <li class="slds-button-group-item"><button onclick={queryGenericCall} >Run Soql Query</button></li>
-                <li class="slds-button-group-item"><button if:true={relatedParties} onclick={mergeRecords} >Merge</button></li>
-            </ul>
+                <ul class="slds-button-group-row">
+                    <li class="slds-button-group-item"><button if:true={selectedSoqlOptionName} onclick={runSoqlQuery} >Run Soql Query</button></li>
+                    <li class="slds-button-group-item"><button if:true={queriedRecords} onclick={executeWebmergeFinishMerging} >Merge Selected Records</button></li>
+                </ul>
 
-            <template if:true={relatedParties}>
-                <div class="slds-p-top_medium lgc-bg" style="height: 300px;">
-                        <lightning-datatable
-                            key-field="Id"
-                            data={relatedParties}
-                            columns={tableColumnLabels}
-                            is-loading={tableLoadingState}
-                            onrowselection={getSelectedRecords}>
-                        </lightning-datatable>
-                </div>
-            </template>
+                <template if:true={queriedRecords}>
+                    <div class="slds-p-top_medium lgc-bg" style="height: 300px;">
+                            <lightning-datatable
+                                key-field="Id"
+                                data={queriedRecords}
+                                columns={tableColumnLabels}
+                                is-loading={tableLoadingState}
+                                onrowselection={setSelectedRecords}>
+                            </lightning-datatable>
+                    </div>
+                </template>
+            </div>
         </div>
     </lightning-card>
 </template>
