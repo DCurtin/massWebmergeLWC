@@ -14,8 +14,7 @@ export default class MassWebmergeCustomReports extends LightningElement
     availableSoqlQueries=null;//a list of possible soql queries
 
     @track tableColumnLabels = [
-        { label: 'Name', fieldName: 'name' },
-        { label: 'account', fieldName: 'Account__r.Id' }
+        { label: 'Name', fieldName: 'Name' }
     ];
 
     selectedSoqlOptionName = null;
@@ -76,54 +75,6 @@ export default class MassWebmergeCustomReports extends LightningElement
             this.availableSoqlQueries=result.queries;
             this.soqlOptionNamesList = this.getSoqlOptionNames(result.queries);
         }.bind(this));
-    }
-
-    getTableColumnLabels(selectedSoqlOptionName)
-    {
-        var queryParts = this.breakDownQueryStringRemoveSelect(selectedSoqlOptionName)
-        var columnNames = this.parseOutColumnNames(queryParts);
-        return this.generateFormattedColumnNames(columnNames);
-    }
-
-    generateFormattedColumnNames(columnNames)
-    {
-        var columnNamesFormatted = [];
-
-        columnNames.forEach(name=>
-            {
-                columnNamesFormatted.push({ label: name, fieldName: name })
-            })
-            console.log(columnNamesFormatted);
-            return columnNamesFormatted;
-    }
-
-    breakDownQueryStringRemoveSelect(selectedSoqlOptionName)
-    {
-        var queryString =  this.availableSoqlQueries[selectedSoqlOptionName].query;
-        var queryParts = queryString.split(' ');
-        return queryParts.slice(1); //return array with 'select' removed
-    }
-
-    parseOutColumnNames(queryParts)
-    {
-        var columns = [];
-        var partsCount = queryParts.length;
-        var index;
-        var valueAtIndex;
-        var valueAtIndexCleaned;
-
-        for(index=0; index < partsCount; ++index)
-        {
-            valueAtIndex = queryParts[index];
-            valueAtIndexCleaned = valueAtIndex.replace(',', '');
-
-
-            if(valueAtIndexCleaned.toLowerCase() === 'from')
-                break;
-
-            columns.push(valueAtIndexCleaned);
-        }
-        return columns;
     }
 
     getSoqlOptionNames(availableQueries)
