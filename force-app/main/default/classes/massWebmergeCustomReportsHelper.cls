@@ -17,7 +17,7 @@ public with sharing class massWebmergeCustomReportsHelper {
     }
 
     @AuraEnabled
-    public static soqlQueriesWrapper getQueries(){
+    public static soqlQueriesWrapper getQueriesFromStaticResource(){
         StaticResource soqlQueriesStaticResource = [select id,body from StaticResource Where name = 'soqlQueries' LIMIT 1];
         soqlQueriesWrapper soqlQueries = (soqlQueriesWrapper)JSON.deserialize(soqlQueriesStaticResource.body.toString(), soqlQueriesWrapper.class);
         return soqlQueries;    

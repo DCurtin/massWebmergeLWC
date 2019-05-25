@@ -7,8 +7,8 @@
                 value=""
                 label="Choose a Query:"
                 placeholder="Select a Query Option"
-                options={soqlOptions}
-                onchange={setSoqlOption}
+                options={soqlOptionNames}
+                onchange={setselectedSoqlOptionName}
                 class="slds-m-top_medium"
                 >
             </lightning-combobox>
@@ -19,16 +19,15 @@
             </ul>
 
             <template if:true={relatedParties}>
-                <table class="PartyTable slds-m-top_medium" style="width:100%">
-                    <tr>
-                        <th><lightning-input class="slds-m-around_xxx-small" type="checkbox" onchange={toggleCheckBoxes}></lightning-input></th>
-                        <th>Id</th>
-                        <th>Name</th>
-                    </tr>
-                    <template for:each={relatedParties} for:item="rp">
-                        <tr key={rp.Id}> <td><lightning-input class="slds-m-around_xxx-small" type="checkbox" ></lightning-input></td> <td>{rp.Id}</td> <td>{rp.Name}</td></tr>
-                    </template>
-                </table>
+                <div class="slds-p-top_medium lgc-bg" style="height: 300px;">
+                        <lightning-datatable
+                            key-field="Id"
+                            data={relatedParties}
+                            columns={tableColumnLabels}
+                            is-loading={tableLoadingState}
+                            onrowselection={getSelectedRecords}>
+                        </lightning-datatable>
+                </div>
             </template>
         </div>
     </lightning-card>
