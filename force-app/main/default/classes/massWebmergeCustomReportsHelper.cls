@@ -138,7 +138,7 @@ public with sharing class massWebmergeCustomReportsHelper {
         string fieldValue = (string) baseObject.get(field);
         if(fieldValue != null)
         {
-            return fieldValue.contains(testValue);
+            return fieldValue.containsIgnoreCase(testValue);
         }else 
         {
             return false;
