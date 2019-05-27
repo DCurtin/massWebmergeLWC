@@ -1,4 +1,6 @@
 public with sharing class massWebmergeCustomReportsHelper {
+    private static final string SQUERYSTATICRESOURCENAME = 'soqlQueries';
+    
     @AuraEnabled
     public static list<sobject> retrieveRecordsUsingWrapper(soqlQueryWrapper wrappedSoqlQuery){
         
@@ -12,30 +14,57 @@ public with sharing class massWebmergeCustomReportsHelper {
             
     }
 
-    @AuraEnabled
-    public static map<string,soqlQueryWrapper> getQueriesFromStaticResource(){
-        StaticResource soqlQueriesStaticResource = [select id,body from StaticResource Where name = 'soqlQueries' LIMIT 1];
-        map<string,soqlQueryWrapper> wrappedSoqlQueries = (map<string,soqlQueryWrapper>)JSON.deserialize(soqlQueriesStaticResource.body.toString(), map<string,soqlQueryWrapper>.class);
+    public static map<string,soqlQueryWrapper> getQueriesFromStaticResource(StaticResource soqlQueriesStaticResource){
+        map<string,soqlQueryWrapper> wrappedSoqlQueries = convertStaticResourceToMapOfsoqlQueryWrappers(soqlQueriesStaticResource);
         return wrappedSoqlQueries;    
     }
 
+    @AuraEnabled
+    public static map<string,soqlQueryWrapper> getQueriesFromStaticResource(){
+         StaticResource soqlQueriesStaticResource = getStaticResource(SQUERYSTATICRESOURCENAME);
+        map<string,soqlQueryWrapper> wrappedSoqlQueries = convertStaticResourceToMapOfsoqlQueryWrappers(soqlQueriesStaticResource);
+        return wrappedSoqlQueries;    
+    }  
+
     @AuraEnabled(cacheable=false)
-    public static void doWebmerge(list<Id> recordIds, string mappingName){
-        webm__webmerge_mapping__c mapping = [SELECT id, webm__Salesforce_Object_Name__c from webm__webmerge_mapping__c where name=:mappingName LIMIT 1];
-        
+    public static Boolean doWebmerge(list<Id> recordIds, string mappingName){
+        webm__webmerge_mapping__c mapping = getMappingFromName(mappingName);
+
         if(mapping == null)
-            return;
+        {
+            return false;
+        }
 
         boolean run = webm.WebmergeGenerator.generateDocumentBatchCombined(
             mapping.id, 
             recordIds, 
             mapping.webm__Salesforce_Object_Name__c
             );
-
-        System.debug(run);
+        return run;
     }
 
+  
     //HELPERS
+    public static StaticResource getStaticResource(string resourceName)
+    {
+            return[select id,body from StaticResource Where name =: SQUERYSTATICRESOURCENAME LIMIT 1];
+    }
+    
+    private static map<string,soqlQueryWrapper> convertStaticResourceToMapOfsoqlQueryWrappers(StaticResource soqlQueriesStaticResource)
+    {
+        return (map<string,soqlQueryWrapper>)JSON.deserialize(soqlQueriesStaticResource.body.toString(), map<string,soqlQueryWrapper>.class);
+    }
+
+    private static webm__webmerge_mapping__c getMappingFromName(string mappingName)
+    {
+        List<webm__webmerge_mapping__c> listOfMappings = [SELECT id, webm__Salesforce_Object_Name__c from webm__webmerge_mapping__c where name=:mappingName];
+        if(listOfMappings.size() == 0)
+        {
+            return null;
+        }
+        return listOfMappings[0];
+    }
+
     private static boolean isFilteringRequired(soqlQueryWrapper wrappedSoqlQuery)
     {
         if(String.isEmpty(wrappedSoqlQuery.filterFieldPath) || String.isEmpty(wrappedSoqlQuery.filterValue))
@@ -79,33 +108,41 @@ public with sharing class massWebmergeCustomReportsHelper {
 
         sobject baseSobject = retriveBaseObject(root, orderedListOfDescendents, fieldAtBaseOFDescendentObjects);
 
-        return objectContainsFieldValue(baseSobject, fieldAtBaseOFDescendentObjects, filterValue);
+        return objectContainsValueInField(baseSobject, fieldAtBaseOFDescendentObjects, filterValue);
     }
 
     private static sobject retriveBaseObject(Sobject root, list<string> orderedListOfDescendents, string fieldAtBaseOFDescendentObjects)
     {
         sobject currentOjbect = root;
 
-        for(string currentPosition : orderedListOfDescendents )
+        for(string currentChild : orderedListOfDescendents )
         {
-            if(currentPosition == fieldAtBaseOFDescendentObjects)
+
+            if(currentChild == fieldAtBaseOFDescendentObjects)
             {
                 break;
             }
-            currentOjbect = stepDownToChild(currentPosition, currentOjbect);
+            currentOjbect = stepDownToChild(currentChild, currentOjbect);
         }
 
         return currentOjbect;
     }
 
-    private static sobject stepDownToChild(string childFieldName, sobject parent)
+    private static sobject stepDownToChild(string childName, sobject parent)
     {
-        return parent.getSobject(childFieldName);
+        return parent.getSobject(childName);
     }
 
-    private static boolean objectContainsFieldValue(sobject baseObject, string field, string value)
+    private static boolean objectContainsValueInField(sobject baseObject, string field, string testValue)
     {
-        return ((string) baseObject.get(field)).contains(value);
+        string fieldValue = (string) baseObject.get(field);
+        if(fieldValue != null)
+        {
+            return fieldValue.contains(testValue);
+        }else 
+        {
+            return false;
+        }
     }
 }
 

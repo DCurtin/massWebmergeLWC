@@ -26,9 +26,6 @@ export default class MassWebmergeCustomReports extends LightningElement
     
     selectedRecords = [];
     selectedMapping = null;
-    /*
-        provide available 
-    */
 
     constructor()
     {
@@ -43,7 +40,6 @@ export default class MassWebmergeCustomReports extends LightningElement
     {
         getQueriesFromStaticResource().then(function(result)
         {
-            console.log(result);
             this.setAvailableSoqlQueries(result);
             this.setsoqlOptionNamesList(result);
         }.bind(this));
@@ -179,21 +175,5 @@ export default class MassWebmergeCustomReports extends LightningElement
     setStatusMessage(message)
     {
         this.statusMessage = message;
-    }
-    failWhale()
-    {
-        var failWhaleString = ` 
-            FAIL WHALE!
-
-        W     W      W        
-        W        W  W     W    
-                      '.  W      
-          .-""-._     \\ \\.--|  
-         /       "-..__) .-'   
-        |     _         /      
-        '-.__,   .__.,'       
-         \`'----'._--'      
-        VVVVVVVVVVVVVVVVVVVVV`;
-        console.log(failWhaleString);
     }
 }
