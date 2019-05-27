@@ -132,8 +132,6 @@ export default class MassWebmergeCustomReports extends LightningElement
         var recordIds = this.getRecordIdsFromSelectedRecords();
         if(recordIds.length === 0)
         {
-            //toast note
-            //
             this.notifyUserNoRecordsSelected();
             return;
         }
