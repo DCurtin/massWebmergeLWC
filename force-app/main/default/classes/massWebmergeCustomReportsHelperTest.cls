@@ -1,11 +1,12 @@
 @isTest
 public class massWebmergeCustomReportsHelperTest {
+	private static final NUMBEROFUSERS = 5;
     @TestSetup
     static void setup()
     {
         List<string> assetType = new List<string>();
         List<string> caseSubjects = new List<string>();
-        TestUtils.getPortalUser(5,1,assetType,caseSubjects);
+        TestUtils.getPortalUser(NUMBEROFUSERS,1,assetType,caseSubjects);
         generateAndInsertMappings(1,'Related_Party__c');
     }
 
@@ -24,7 +25,8 @@ public class massWebmergeCustomReportsHelperTest {
 
     static testmethod void retrieveRecordsUsingWrapper_soqlWrapperWithFilterDefined_ListOfFilteredRecords()
     {
-        List<Account> testAccounts = [SELECT id, Misc_Notes__c FROM Account WHERE status__c !='' LIMIT 2];
+		integer numberOfDeceased=2;
+        List<Account> testAccounts = [SELECT id, Misc_Notes__c FROM Account WHERE status__c !='' LIMIT :numberOfDeceased];
         
         system.debug(testAccounts + ' TEST6565');
 
@@ -39,8 +41,7 @@ public class massWebmergeCustomReportsHelperTest {
         StaticResource soqlQueriesStaticResource = getTestStaticResource();
         map<string, soqlQueryWrapper> soqlQueryWrapperConverted = massWebmergeCustomReportsHelper.getQueriesFromStaticResource(soqlQueriesStaticResource);
         list<Related_Party__c> filteredParties = (list<Related_Party__c>) massWebmergeCustomReportsHelper.retrieveRecordsUsingWrapper(soqlQueryWrapperConverted.get('Deceased'));
-        system.debug(filteredParties + ' TEST6565');
-        System.assertEquals(2, filteredParties.size());
+        System.assertEquals(numberOfDeceased, filteredParties.size());
         
     }
 
@@ -49,7 +50,7 @@ public class massWebmergeCustomReportsHelperTest {
         StaticResource soqlQueriesStaticResource = getTestStaticResource();
         map<string, soqlQueryWrapper> soqlQueryWrapperConverted = massWebmergeCustomReportsHelper.getQueriesFromStaticResource(soqlQueriesStaticResource);
         list<Related_Party__c> filteredParties = (list<Related_Party__c>) massWebmergeCustomReportsHelper.retrieveRecordsUsingWrapper(soqlQueryWrapperConverted.get('All Parties'));
-        System.assertEquals(5, filteredParties.size());
+        System.assertEquals(NUMBEROFUSERS, filteredParties.size());
     }
 
     static testmethod void doWebmerge_generalCallWithGeneratedMapping_noExceptionThrownAndReturnsTrue()
@@ -68,7 +69,6 @@ public class massWebmergeCustomReportsHelperTest {
         {
             System.assert(false, 'Error message: ' + err.getMessage() + ' Exception thrown at assertion.');
         }
-        //System.assertEquals(5, filteredParties.size());
     }
 
     static testmethod void doWebmerge_fakeMappingName_noExceptionThrownAndReturnsFalse()
