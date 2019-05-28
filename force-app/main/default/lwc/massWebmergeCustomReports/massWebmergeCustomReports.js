@@ -136,7 +136,7 @@ export default class MassWebmergeCustomReports extends LightningElement
             return;
         }
 
-        doWebmerge({recordIds: recordIds, mappingName: this.availableSoqlQueries[this.selectedSoqlOptionName].webmergeMappingName})
+        doWebmerge({recordIds: recordIds, mappingName: this.selectedMapping})
 
     }
 
