@@ -7,7 +7,8 @@ public with sharing class massWebmergeCustomReportsHelper {
         if(isFilteringRequired(wrappedSoqlQuery))
         {
             return getFilteredObjects(wrappedSoqlQuery);
-        }else 
+        }
+        else 
         {
             return getRecordsFromSoqlQuery(wrappedSoqlQuery);
         }
@@ -68,7 +69,9 @@ public with sharing class massWebmergeCustomReportsHelper {
     private static boolean isFilteringRequired(soqlQueryWrapper wrappedSoqlQuery)
     {
         if(String.isEmpty(wrappedSoqlQuery.filterFieldPath) || String.isEmpty(wrappedSoqlQuery.filterValue))
+        {
             return false;
+        }
         return true;
     }
 
@@ -81,7 +84,9 @@ public with sharing class massWebmergeCustomReportsHelper {
         {         
             boolean addObjectToList = filterSobject(accountQ, wrappedSoqlQuery.filterFieldPath, wrappedSoqlQuery.filterValue);
             if(addObjectToList)
+            {
                 filteredList.add((sobject) accountQ);
+            }
         }
         
         return filteredList;
@@ -139,7 +144,8 @@ public with sharing class massWebmergeCustomReportsHelper {
         if(fieldValue != null)
         {
             return fieldValue.containsIgnoreCase(testValue);
-        }else 
+        }
+        else 
         {
             return false;
         }

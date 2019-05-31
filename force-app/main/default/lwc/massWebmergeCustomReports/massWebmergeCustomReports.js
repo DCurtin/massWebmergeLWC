@@ -58,8 +58,7 @@ export default class MassWebmergeCustomReports extends LightningElement
     {
         var soqlQueryNames = [];
 
-        if(availableQueries == null || availableQueries.length === 0)
-        {
+        if(availableQueries == null || availableQueries.length === 0){
             return soqlQueryNames;
         }
         
@@ -96,8 +95,9 @@ export default class MassWebmergeCustomReports extends LightningElement
         {
             this.settableLoadingState(false);
             this.setQueriedRecords(result);
-            if(result.length === 0)
+            if(result.length === 0){
                 this.notifyUserQueryReturnedNoRecords();
+            }
         }.bind(this))
     }
     settableLoadingState(state)
@@ -130,8 +130,7 @@ export default class MassWebmergeCustomReports extends LightningElement
     callDoWebmergeApexIfRecordsSelected()
     {
         var recordIds = this.getRecordIdsFromSelectedRecords();
-        if(recordIds.length === 0)
-        {
+        if(recordIds.length === 0){
             this.notifyUserNoRecordsSelected();
             return;
         }
