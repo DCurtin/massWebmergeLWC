@@ -1,6 +1,6 @@
 @isTest
 public class massWebmergeCustomReportsHelperTest {
-	private static final NUMBEROFUSERS = 5;
+	private static final integer NUMBEROFUSERS = 5;
     @TestSetup
     static void setup()
     {
