@@ -48,7 +48,7 @@ public with sharing class massWebmergeCustomReportsHelper {
     //HELPERS
     public static StaticResource getStaticResource(string resourceName)
     {
-            return[select id,body from StaticResource Where name =: SQUERYSTATICRESOURCENAME LIMIT 1];
+            return[select id,body from StaticResource Where name =: resourceName LIMIT 1];
     }
     
     private static map<string,soqlQueryWrapper> convertStaticResourceToMapOfsoqlQueryWrappers(StaticResource soqlQueriesStaticResource)
