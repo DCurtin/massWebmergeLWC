@@ -28,7 +28,7 @@ public with sharing class massWebmergeCustomReportsHelper {
     }  
 
     @AuraEnabled(cacheable=false)
-    public static Boolean doWebmerge(list<Id> recordIds, string mappingName){
+    public static Boolean doWebmerge(list<Id> recordIds, string mappingName, string action){
         webm__webmerge_mapping__c mapping = getMappingFromName(mappingName);
 
         if(mapping == null)
@@ -36,19 +36,98 @@ public with sharing class massWebmergeCustomReportsHelper {
             return false;
         }
 
-        boolean run = webm.WebmergeGenerator.generateDocumentBatchCombined(
+        /*boolean run = webm.WebmergeGenerator.generateDocumentBatchCombined(
             mapping.id, 
             recordIds, 
             mapping.webm__Salesforce_Object_Name__c
-            );
-        return run;
+            );*/
+
+        generateAndEmailReport(recordIds, mappingName, mapping.webm__Salesforce_Object_Name__c, action);
+        return true;
     }
 
-  
+    public static void generateAndEmailReport(List<id> recordIds, string mappingName, string sobjectName, string action)
+    {
+        set<id> recordIdSet = new Set<id>(recordIds);
+        string subjectLine = 'Webmerge ' + mappingName;
+        string emailUser = System.UserInfo.getUserEmail();
+
+        if(action == null || action =='')
+        {
+            //default action
+        }
+
+        if(action == 'DeceasedAction')
+        {
+            blob csvAttachment = generateDeceasedReport(recordIdSet);
+            generateEmail(emailUser, csvAttachment, subjectLine);
+        }
+        
+        
+
+
+    }
+
+    public static blob generateDeceasedReport(set<id> recordIdSet)
+    {
+        string recordReport = 'WhoId,WhatId,Type,Status,ActivityDate,Subject,Description\n';
+        List<Related_Party__c> relatedPartiesList = [SELECT id, Account__c, PartyName__c, PartyName__r.Name FROM Related_Party__c WHERE ID in :recordIdSet];
+        for(Related_Party__c record : relatedPartiesList)
+        {
+            recordReport += record.PartyName__c +','+ record.Account__c +','+ 'Mail' +','+ 'Completed' +','+ system.Date.today() +','+ 'Deceased Notice ' + record.PartyName__r.Name +','+ 'Deceased notice to related party.' + '\n';
+        }
+        blob csvAttachment = Blob.valueOf(recordReport);
+        
+        return csvAttachment;
+    }
+
+    /*Public static List<Sobject> queryRecordSet(string queryFields, string sobject, Set<Id> recordIdSet)
+    {
+        List<Sobject> recordList = Database.query('SELECT Id,'+ queryFields  +' FROM ' + sobjectName + ' WHERE Id in  :recordSet');
+
+        return recordList;
+    }*/
+
+
+    /*public static void generateReport()
+    {
+
+        string header ='Record Id,Record Name,URL\n';
+        string body = header;
+        for(Sobject record: recordList)
+        {
+            body += record.id + ',' + record.get('Name') + ',' + 'https:\\\\entrust.my.salesforce.com\\' + record.id + '\n';
+        }
+    }*/
+
+    public static void generateEmail(string userEmail, blob attachment, string subjectLine)
+    {
+        
+
+        Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+        Messaging.EmailFileAttachment csvAttc = new Messaging.EmailFileAttachment();
+
+        string csvname='RecordList.csv';
+        csvAttc.setFileName(csvname);
+        csvAttc.setBody(attachment);
+        
+
+        string[] toAddress = new list<String> {userEmail};
+        String subject =subjectLine;
+        email.setSubject(subject);
+        email.setToAddresses(toAddress);
+        email.setPlainTextBody(subject);
+        email.setFileAttachments(new Messaging.EmailFileAttachment[]{csvAttc});
+        Messaging.SendEmailResult[] r = Messaging.sendEmail(new Messaging.SingleEmailMessage[]{email});
+        return;
+    }
+
+    
+     
     //HELPERS
     public static StaticResource getStaticResource(string resourceName)
     {
-            return[select id,body from StaticResource Where name =: resourceName LIMIT 1];
+            return[select id,body from StaticResource Where name = :resourceName LIMIT 1];
     }
     
     private static map<string,soqlQueryWrapper> convertStaticResourceToMapOfsoqlQueryWrappers(StaticResource soqlQueriesStaticResource)

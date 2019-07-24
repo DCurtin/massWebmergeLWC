@@ -26,6 +26,7 @@ export default class MassWebmergeCustomReports extends LightningElement
     
     selectedRecords = [];
     selectedMapping = null;
+    selectedAction = null;
 
     constructor()
     {
@@ -78,12 +79,20 @@ export default class MassWebmergeCustomReports extends LightningElement
     runSoqlQuery()
     {
         this.setSelectedMapping();
+        this.setSelectedAction();
         this.callRetrieveRecordsUsingWrapperApex();
+    }
+
+    setSelectedAction()
+    {
+        this.selectedAction = this.availableSoqlQueries[this.selectedSoqlOptionName].action;
+        console.log(this.selectedAction);
     }
 
     setSelectedMapping()
     {
         this.selectedMapping = this.availableSoqlQueries[this.selectedSoqlOptionName].webmergeMappingName;
+        console.log(this.selectedMapping);
     }
 
     callRetrieveRecordsUsingWrapperApex()
@@ -135,7 +144,7 @@ export default class MassWebmergeCustomReports extends LightningElement
             return;
         }
 
-        doWebmerge({recordIds: recordIds, mappingName: this.selectedMapping})
+        doWebmerge({recordIds: recordIds, mappingName: this.selectedMapping, action: this.selectedAction})
 
     }
 

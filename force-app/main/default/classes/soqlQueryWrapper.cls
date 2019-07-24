@@ -13,4 +13,7 @@ public with sharing class soqlQueryWrapper {
 
     @AuraEnabled
     public string webmergeMappingName {get; set;}
+
+    @AuraEnabled
+    public string action {get; set;}
 }
