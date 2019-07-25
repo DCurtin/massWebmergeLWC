@@ -52,53 +52,59 @@ public with sharing class massWebmergeCustomReportsHelper {
         string subjectLine = 'Webmerge ' + mappingName;
         string emailUser = System.UserInfo.getUserEmail();
 
-        if(action == null || action =='')
-        {
-            //default action
-        }
-
         if(action == 'DeceasedAction')
         {
-            blob csvAttachment = generateDeceasedReport(recordIdSet);
+            blob csvAttachment = generateDeceasedReport(recordIdSet, sobjectName);
             generateEmail(emailUser, csvAttachment, subjectLine);
+            return;
         }
-        
-        
 
-
+        //base case null or undefined action
+        blob csvAttachment = generatedefaultReport(recordIdSet, sobjectName);
+        generateEmail(emailUser, csvAttachment, subjectLine);
     }
 
-    public static blob generateDeceasedReport(set<id> recordIdSet)
+    public static blob generateDeceasedReport(set<id> recordIdSet, string sobjectName)
     {
-        string recordReport = 'WhoId,WhatId,Type,Status,ActivityDate,Subject,Description\n';
-        List<Related_Party__c> relatedPartiesList = [SELECT id, Account__c, PartyName__c, PartyName__r.Name FROM Related_Party__c WHERE ID in :recordIdSet];
+        
+        string queryFields = 'Name, Account__c, PartyName__c, PartyName__r.Name';
+        List<Related_Party__c> relatedPartiesList = queryRecordSet(queryFields, sobjectName, recordIdSet); //[SELECT id, Account__c, PartyName__c, PartyName__r.Name FROM Related_Party__c WHERE ID in :recordIdSet];
+
+        string recordReport = 'Name,WhoId,WhatId,Type,Status,ActivityDate,Subject,Description\n';
         for(Related_Party__c record : relatedPartiesList)
         {
-            recordReport += record.PartyName__c +','+ record.Account__c +','+ 'Mail' +','+ 'Completed' +','+ system.Date.today() +','+ 'Deceased Notice ' + record.PartyName__r.Name +','+ 'Deceased notice to related party.' + '\n';
+            recordReport += record.Name +','+ record.PartyName__c +','+ record.Account__c +','+ 'Mail' +','+ 'Completed' +','+ system.Date.today() +','+ 'Deceased Notice ' + record.PartyName__r.Name +','+ 'Deceased notice to related party.' + '\n';
         }
         blob csvAttachment = Blob.valueOf(recordReport);
         
         return csvAttachment;
     }
 
-    /*Public static List<Sobject> queryRecordSet(string queryFields, string sobject, Set<Id> recordIdSet)
+    Public static List<Sobject> queryRecordSet(string queryFields, string sobjectName, Set<Id> recordIdSet)
     {
-        List<Sobject> recordList = Database.query('SELECT Id,'+ queryFields  +' FROM ' + sobjectName + ' WHERE Id in  :recordSet');
+        List<Sobject> recordList = Database.query('SELECT Id,'+ queryFields  +' FROM ' + sobjectName + ' WHERE Id in  :recordIdSet');
 
         return recordList;
-    }*/
+    }
 
 
-    /*public static void generateReport()
+    public static blob generatedefaultReport(set<id> recordIdSet, string sobjectName)
     {
 
+        string queryFields = 'Name';
+        List<Sobject> recordList = queryRecordSet(queryFields, sobjectName, recordIdSet); //[SELECT id, Account__c, PartyName__c, PartyName__r.Name FROM Related_Party__c WHERE ID in :recordIdSet];
+
         string header ='Record Id,Record Name,URL\n';
-        string body = header;
+        string recordReport = header;
         for(Sobject record: recordList)
         {
-            body += record.id + ',' + record.get('Name') + ',' + 'https:\\\\entrust.my.salesforce.com\\' + record.id + '\n';
+            recordReport += record.id + ',' + record.get('Name') + ',' + 'https:\\\\entrust.my.salesforce.com\\' + record.id + '\n';
         }
-    }*/
+
+        blob csvAttachment = Blob.valueOf(recordReport);
+
+        return csvAttachment;
+    }
 
     public static void generateEmail(string userEmail, blob attachment, string subjectLine)
     {
