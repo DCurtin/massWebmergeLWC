@@ -50,7 +50,7 @@ public with sharing class massWebmergeCustomReportsHelper {
     {
         set<id> recordIdSet = new Set<id>(recordIds);
         string subjectLine = 'Webmerge ' + mappingName;
-        string emailUser = System.UserInfo.getUserEmail();
+        List<string> emailUser = new List<string> {'techsupport@midlandira.com', System.UserInfo.getUserEmail()};//'System.UserInfo.getUserEmail()';
 
         if(action == 'DeceasedAction')
         {
@@ -106,7 +106,7 @@ public with sharing class massWebmergeCustomReportsHelper {
         return csvAttachment;
     }
 
-    public static void generateEmail(string userEmail, blob attachment, string subjectLine)
+    public static void generateEmail(list<string> userEmail, blob attachment, string subjectLine)
     {
         
 
@@ -118,7 +118,7 @@ public with sharing class massWebmergeCustomReportsHelper {
         csvAttc.setBody(attachment);
         
 
-        string[] toAddress = new list<String> {userEmail};
+        string[] toAddress = userEmail;//new list<String> {userEmail};
         String subject =subjectLine;
         email.setSubject(subject);
         email.setToAddresses(toAddress);
@@ -236,5 +236,3 @@ public with sharing class massWebmergeCustomReportsHelper {
         }
     }
 }
-
-
